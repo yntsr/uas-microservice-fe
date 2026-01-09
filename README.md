@@ -18,10 +18,12 @@ Aplikasi web frontend untuk sistem manajemen produk berbasis microservice archit
 
 ## 📖 Deskripsi
 
-Dashboard Microservice adalah aplikasi web untuk mengelola produk dengan sistem autentikasi terintegrasi. Aplikasi ini menggunakan arsitektur microservice dimana frontend berkomunikasi langsung dengan dua service terpisah:
+Dashboard Microservice Client adalah aplikasi web frontend untuk mengelola produk dengan sistem autentikasi terintegrasi. Aplikasi ini menggunakan arsitektur microservice dimana frontend berkomunikasi langsung dengan dua service terpisah tanpa menggunakan API Gateway:
 
-- **Auth Service**: Menangani autentikasi dan otorisasi pengguna
-- **Product Service**: Menangani CRUD operasi untuk produk
+- **Auth Service**: Menangani autentikasi dan otorisasi pengguna (repository terpisah)
+- **Product Service**: Menangani CRUD operasi untuk produk (repository terpisah)
+
+> **Note**: Ini adalah repository terpisah untuk client application. Auth Service dan Product Service berada di repository yang berbeda.
 
 ## 🏗️ Arsitektur Aplikasi
 
@@ -96,13 +98,14 @@ Dashboard Microservice adalah aplikasi web untuk mengelola produk dengan sistem 
 ## 📁 Struktur Folder
 
 ```
-client/
+.
 ├── public/                 # Static assets
 │   └── vite.svg
 ├── src/
 │   ├── api/               # API configuration
 │   │   └── index.js       # Axios instances & API methods
 │   ├── assets/            # Images & static files
+│   │   └── react.svg
 │   ├── components/        # Reusable components
 │   │   ├── Products.jsx    # Product management component
 │   │   ├── ProtectedRoute.jsx  # Route protection
@@ -119,11 +122,16 @@ client/
 │   ├── main.jsx           # Entry point
 │   └── index.css          # Global styles
 ├── .env                   # Environment variables (gitignored)
+├── .gitignore             # Git ignore rules
 ├── env-example            # Environment variables template
 ├── package.json           # Dependencies & scripts
+├── package-lock.json      # Lock file
 ├── vite.config.js        # Vite configuration
 ├── vercel.json           # Vercel deployment config
-└── README.md             # This file
+├── eslint.config.js      # ESLint configuration
+├── index.html            # HTML entry point
+├── README.md             # This file
+└── ARCHITECTURE.md       # Architecture documentation
 ```
 
 ## 🚀 Setup dan Instalasi
@@ -131,14 +139,17 @@ client/
 ### Prerequisites
 - Node.js >= 18.x
 - npm atau yarn
-- Auth Service berjalan di port 3003
-- Product Service berjalan di port 3001
+- **Auth Service** harus berjalan dan accessible (default: `http://localhost:3003`)
+- **Product Service** harus berjalan dan accessible (default: `http://localhost:3001`)
+
+> **Note**: Pastikan kedua service sudah berjalan sebelum menjalankan client application.
 
 ### Langkah Instalasi
 
-1. **Clone repository dan masuk ke folder client**
+1. **Clone repository**
    ```bash
-   cd client
+   git clone <repository-url>
+   cd <repository-name>
    ```
 
 2. **Install dependencies**
@@ -151,21 +162,30 @@ client/
    cp env-example .env
    ```
    
-   Edit file `.env` dan sesuaikan URL service:
+   Edit file `.env` dan sesuaikan URL service sesuai dengan deployment:
    ```env
+   # Development
    VITE_AUTH_SERVICE_URL=http://localhost:3003
    VITE_PRODUCT_SERVICE_URL=http://localhost:3001
+   
+   # Production (contoh)
+   # VITE_AUTH_SERVICE_URL=https://auth-service.example.com
+   # VITE_PRODUCT_SERVICE_URL=https://product-service.example.com
    ```
 
 4. **Jalankan development server**
    ```bash
    npm run dev
    ```
+   
+   Aplikasi akan berjalan di `http://localhost:5173` (default Vite port)
 
 5. **Build untuk production**
    ```bash
    npm run build
    ```
+   
+   Output akan berada di folder `dist/`
 
 6. **Preview production build**
    ```bash
@@ -185,50 +205,6 @@ VITE_AUTH_SERVICE_URL=http://localhost:3003
 # Product Service URL
 VITE_PRODUCT_SERVICE_URL=http://localhost:3001
 ```
-
-### Vite Configuration
-
-File `vite.config.js` mengkonfigurasi:
-- React plugin
-- Build output directory
-- Development server port
-
-### Vercel Configuration
-
-File `vercel.json` mengkonfigurasi:
-- Routing untuk SPA (Single Page Application)
-- Semua route diarahkan ke `index.html`
-
-## ✨ Fitur-Fitur
-
-### 1. Autentikasi
-- ✅ Login dengan username dan password
-- ✅ JWT token-based authentication
-- ✅ Auto logout saat token expired
-- ✅ Protected routes
-- ✅ User profile display
-
-### 2. Manajemen Produk
-- ✅ Tampilkan daftar produk (table/card view)
-- ✅ Tambah produk baru
-- ✅ Edit produk
-- ✅ Hapus produk
-- ✅ Format currency Indonesia
-- ✅ Stock management
-
-### 3. User Experience
-- ✅ Responsive design (mobile, tablet, desktop)
-- ✅ Toast notifications
-- ✅ Loading states
-- ✅ Error handling
-- ✅ Form validation
-
-### 4. Responsive Design
-- ✅ Mobile-first approach
-- ✅ Card layout untuk mobile
-- ✅ Table layout untuk desktop
-- ✅ Adaptive navigation
-- ✅ Touch-friendly buttons
 
 ## 🔌 API Integration
 
@@ -343,39 +319,10 @@ Komponen untuk menampilkan notifikasi:
 - Hover effects
 - Larger spacing
 
-## 🚢 Deployment
-
-### Vercel Deployment
-
-1. **Install Vercel CLI**
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **Deploy**
-   ```bash
-   vercel
-   ```
-
-3. **Set Environment Variables**
-   Di Vercel dashboard, set:
-   - `VITE_AUTH_SERVICE_URL`
-   - `VITE_PRODUCT_SERVICE_URL`
-
-### Build untuk Production
-
-```bash
-npm run build
-```
-
-Output akan berada di folder `dist/` yang dapat di-deploy ke static hosting apapun.
-
-### Environment Variables untuk Production
-
-Pastikan untuk set environment variables di platform deployment:
-- Vercel: Project Settings → Environment Variables
-- Netlify: Site Settings → Environment Variables
-- dll
+**Important Notes:**
+- Environment variables harus dimulai dengan `VITE_` untuk bisa diakses di client-side
+- Setelah mengubah environment variables, perlu rebuild dan redeploy
+- Jangan hardcode service URLs di code, selalu gunakan environment variables
 
 ## 🔒 Security
 
@@ -397,22 +344,44 @@ Pastikan untuk set environment variables di platform deployment:
 ## 🐛 Troubleshooting
 
 ### Issue: Cannot connect to services
-**Solution**: Pastikan kedua service berjalan dan URL di `.env` benar
+**Solution**: 
+- Pastikan kedua service (Auth Service & Product Service) sudah berjalan
+- Verifikasi URL di file `.env` sesuai dengan service endpoints
+- Check network connectivity dan firewall settings
+- Untuk development, pastikan service berjalan di:
+  - Auth Service: `http://localhost:3003`
+  - Product Service: `http://localhost:3001`
 
 ### Issue: 401 Unauthorized
 **Solution**: 
-- Check token di localStorage
-- Verify token masih valid
-- Login ulang jika perlu
+- Check token di browser localStorage (DevTools → Application → Local Storage)
+- Verify token masih valid dengan memanggil `/api/auth/verify`
+- Login ulang jika token expired
+- Pastikan token format: `Bearer <token>`
 
 ### Issue: CORS error
-**Solution**: Pastikan services mengizinkan origin frontend
+**Solution**: 
+- Pastikan services mengizinkan origin frontend di CORS configuration
+- Untuk development, pastikan service mengizinkan `http://localhost:5173`
+- Check browser console untuk detail error CORS
 
 ### Issue: Build fails
 **Solution**: 
-- Clear node_modules: `rm -rf node_modules && npm install`
-- Check Node.js version
-- Check error messages
+- Clear node_modules dan reinstall:
+  ```bash
+  rm -rf node_modules package-lock.json
+  npm install
+  ```
+- Check Node.js version (harus >= 18.x): `node --version`
+- Check error messages di terminal untuk detail
+- Pastikan semua dependencies terinstall dengan benar
+
+### Issue: Environment variables not working
+**Solution**:
+- Pastikan variable dimulai dengan `VITE_` prefix
+- Restart development server setelah mengubah `.env`
+- Untuk production build, pastikan environment variables di-set di deployment platform
+- Check bahwa file `.env` ada di root folder project
 
 ## 📝 Scripts
 
@@ -422,27 +391,3 @@ Pastikan untuk set environment variables di platform deployment:
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
-
-## 📄 License
-
-MIT License
-
-## 👥 Authors
-
-- Development Team
-
-## 📞 Support
-
-Untuk pertanyaan atau issues, silakan buat issue di repository.
-
----
-
-**Last Updated**: 2024
