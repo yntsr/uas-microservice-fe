@@ -6,6 +6,8 @@ const Products = ({ products, onRefresh }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [toast, setToast] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -45,6 +47,7 @@ const Products = ({ products, onRefresh }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       if (editingProduct) {
         await productsAPI.update(editingProduct.id, formData);
@@ -57,17 +60,22 @@ const Products = ({ products, onRefresh }) => {
       onRefresh();
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal menyimpan produk', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
+    setDeletingId(id);
     try {
       await productsAPI.delete(id);
       showToast('Produk berhasil dihapus');
       onRefresh();
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal menghapus produk', 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -75,7 +83,11 @@ const Products = ({ products, onRefresh }) => {
     <div>
       <div className="section-header">
         <h2>Manajemen Produk</h2>
-        <button className="btn btn-primary" onClick={() => openModal()}>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => openModal()}
+          disabled={isSubmitting || deletingId !== null}
+        >
           + Tambah Produk
         </button>
       </div>
@@ -109,8 +121,24 @@ const Products = ({ products, onRefresh }) => {
                     <td>{product.stock}</td>
                     <td>
                       <div className="action-btns">
-                        <button className="btn btn-primary btn-icon" onClick={() => openModal(product)}>✏️</button>
-                        <button className="btn btn-danger btn-icon" onClick={() => handleDelete(product.id)}>🗑️</button>
+                        <button 
+                          className="btn btn-primary btn-icon" 
+                          onClick={() => openModal(product)}
+                          disabled={deletingId === product.id || isSubmitting}
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          className="btn btn-danger btn-icon" 
+                          onClick={() => handleDelete(product.id)}
+                          disabled={deletingId === product.id || isSubmitting}
+                        >
+                          {deletingId === product.id ? (
+                            <span className="btn-spinner"></span>
+                          ) : (
+                            '🗑️'
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -138,8 +166,27 @@ const Products = ({ products, onRefresh }) => {
                 <div className="product-card-stock">Stok: {product.stock}</div>
               </div>
               <div className="product-card-actions">
-                <button className="btn btn-primary" onClick={() => openModal(product)}>Edit</button>
-                <button className="btn btn-danger" onClick={() => handleDelete(product.id)}>Hapus</button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => openModal(product)}
+                  disabled={deletingId === product.id || isSubmitting}
+                >
+                  Edit
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => handleDelete(product.id)}
+                  disabled={deletingId === product.id || isSubmitting}
+                >
+                  {deletingId === product.id ? (
+                    <>
+                      <span className="btn-spinner"></span>
+                      <span style={{ marginLeft: '8px' }}>Menghapus...</span>
+                    </>
+                  ) : (
+                    'Hapus'
+                  )}
+                </button>
               </div>
             </div>
           ))
@@ -147,11 +194,17 @@ const Products = ({ products, onRefresh }) => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="modal-overlay" onClick={isSubmitting ? undefined : closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingProduct ? 'Edit Produk' : 'Tambah Produk'}</h3>
-              <button className="close-btn" onClick={closeModal}>&times;</button>
+              <button 
+                className="close-btn" 
+                onClick={closeModal}
+                disabled={isSubmitting}
+              >
+                &times;
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -194,8 +247,30 @@ const Products = ({ products, onRefresh }) => {
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>Batal</button>
-                <button type="submit" className="btn btn-primary">Simpan</button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={closeModal}
+                  disabled={isSubmitting}
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="btn-spinner"></span>
+                      <span style={{ marginLeft: '8px' }}>
+                        {editingProduct ? 'Menyimpan...' : 'Menambahkan...'}
+                      </span>
+                    </>
+                  ) : (
+                    'Simpan'
+                  )}
+                </button>
               </div>
             </form>
           </div>
